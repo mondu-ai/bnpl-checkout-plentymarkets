@@ -1,0 +1,7 @@
+<script type="text/javascript">
+    function initMonduCheckout(orderId, mopId) {
+        $.get("/mondu/init_payment?order_id=" + orderId + "&mop_id=" + mopId, (data) => {
+            window.location = data.url;
+        });
+    }
+</script>

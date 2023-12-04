@@ -1,0 +1,37 @@
+{
+    "name"              :   "Mondu",
+    "namespace"         :   "Mondu",
+    "marketplaceName"   : {
+        "en": "Mondu Checkout"
+    },
+    "type"              :   "payment",
+    "version"           :   "1.0.0",
+    "pluginIcon"        :   "icon_plugin_xs.png",
+    "description"       :   "Mondu Buy Now Pay Later",
+    "author"            :   "Mondu GmbH",
+    "authorIcon"        :   "icon_author_xs.png",
+    "serviceProvider"   :   "Mondu\\Providers\\MonduServiceProvider",
+    "dependencies"      :   {
+        "guzzlehttp/guzzle": "6.3.*"
+    },
+    "containers": [],
+    "runOnBuild": [
+        "Mondu\\Migrations\\CreatePaymentMethods_01",
+        "Mondu\\Migrations\\CreateMonduTransactionTable_02"
+    ],
+    "platform": {
+        "php": ">=7.3 <8.1"
+    },
+    "dataProviders": [
+        {
+            "key": "Mondu\\Providers\\DataProvider\\MonduReinitializePayment",
+            "name": "Mondu Reinitialize Payment",
+            "description": "Display the Payment Button after the Payment changed to the Mondu"
+        },
+        {
+            "key": "Mondu\\Providers\\DataProvider\\MonduReinitializePaymentScript",
+            "name": "Mondu Reinitialize Payment Script",
+            "description": "Javascript for the Mondu Payment Button"
+        }
+    ]
+}
