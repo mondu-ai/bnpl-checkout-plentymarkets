@@ -2,6 +2,7 @@
 
 namespace Mondu\Factories;
 
+use Mondu\Helper\DomainHelper;
 use Mondu\Traits\MonduMethodTrait;
 use Plenty\Modules\Account\Address\Models\Address;
 use Plenty\Modules\Basket\Contracts\BasketRepositoryContract;
@@ -25,9 +26,17 @@ class OrderFactory
      */
     private $orderRepository;
 
-    public function __construct(OrderRepositoryContract $orderRepository)
-    {
+    /**
+     * @var DomainHelper
+     */
+    private $domainHelper;
+
+    public function __construct(
+        OrderRepositoryContract $orderRepository,
+        DomainHelper $domainHelper
+    ) {
         $this->orderRepository = $orderRepository;
+        $this->domainHelper = $domainHelper;
     }
 
     public function buildOrder(int $mopId = null, string $language = 'en', int $orderId = null): array
@@ -209,17 +218,7 @@ class OrderFactory
 
     protected function getDomain(): string
     {
-        /** @var WebstoreHelper $webstoreHelper */
-        $webstoreHelper = pluginApp(WebstoreHelper::class);
-
-        $webstoreConfig = $webstoreHelper->getCurrentWebstoreConfiguration();
-
-        $domain = $webstoreConfig->domainSsl;
-        if ($domain == 'http://dbmaster.plenty-showcase.de' || $domain == 'http://dbmaster-beta7.plentymarkets.eu' || $domain == 'http://dbmaster-stable7.plentymarkets.eu') {
-            $domain = 'https://master.plentymarkets.com';
-        }
-
-        return $domain;
+        return $this->domainHelper->getDomain();
     }
 
     protected function removeEmptyData(array $array): array {

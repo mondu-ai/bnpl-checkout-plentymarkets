@@ -6,6 +6,8 @@ use Mondu\Api\ApiClient;
 use Mondu\Contracts\MonduTransactionRepositoryContract;
 use Plenty\Modules\Order\Contracts\OrderRepositoryContract;
 use Plenty\Modules\Order\Models\Order;
+use Plenty\Modules\Order\Property\Models\OrderProperty;
+use Plenty\Modules\Order\Property\Models\OrderPropertyType;
 use Plenty\Modules\Payment\Contracts\PaymentOrderRelationRepositoryContract;
 use Plenty\Modules\Payment\Contracts\PaymentRepositoryContract;
 use Plenty\Modules\Payment\Models\Payment;
@@ -77,12 +79,42 @@ class OrderService {
         return $this->paymentRepository->createPayment($paymentData);
     }
 
-    public function assignPlentyPaymentToPlentyOrder(Payment $payment, int $orderId)
+    public function assignPlentyPaymentToPlentyOrder(Payment $payment, int $orderId, string $monduOrderUuid)
     {
         $order = $this->orderRepositoryContract->findOrderById($orderId);
 
         if (!is_null($order) && $order instanceof Order) {
+            $this->orderRepositoryContract->updateOrder(
+                [
+                    'properties' => [
+                        ['typeId' => OrderPropertyType::EXTERNAL_ORDER_ID, 'value' => $monduOrderUuid]
+                    ]
+                ],
+                $orderId
+            );
+
             $this->paymentOrderRelationRepositoryContract->createOrderRelation($payment, $order);
         }
+    }
+
+    public function cancelOrder(Order $order)
+    {
+        $monduUuid = $this->getOrderExternalId($order);
+        if ($monduUuid) {
+            $this->apiClient->cancelOrder($monduUuid);
+        }
+    }
+
+    protected function getOrderExternalId(Order $order): ?string
+    {
+        foreach ($order->properties as $orderProperty) {
+            if ($orderProperty instanceof OrderProperty) {
+                if ($orderProperty->typeId == OrderPropertyType::EXTERNAL_ORDER_ID && !empty($orderProperty->value)) {
+                    return $orderProperty->value;
+                }
+            }
+        }
+
+        return null;
     }
 }

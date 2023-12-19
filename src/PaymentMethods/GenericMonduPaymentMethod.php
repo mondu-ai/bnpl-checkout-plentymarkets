@@ -3,22 +3,18 @@
 namespace Mondu\PaymentMethods;
 
 use Plenty\Modules\Payment\Method\Contracts\PaymentMethodService;
-use Plenty\Plugin\Application;
 
 abstract class GenericMonduPaymentMethod extends PaymentMethodService {
+    abstract public function getName(string $lang = 'de'): string;
+
     public function isActive(): bool
     {
         return true;
     }
 
-    public function isSwitchableTo($orderId): bool
+    public function getFee(): float
     {
-        return true;
-    }
-
-    public function isSwitchableFrom($orderId)
-    {
-        return true;
+        return 0.00;
     }
 
     /**
@@ -29,17 +25,28 @@ abstract class GenericMonduPaymentMethod extends PaymentMethodService {
         return 'https://checkout.mondu.ai/logo.svg';
     }
 
-    /**
-     * Get the name of the payment method.
-     */
-    public function getName(string $lang = 'de'): string
-    {
-        return 'Mondu Generic Payment Method name';
-    }
-
     public function getDescription(string $lang = 'de'): string
     {
         return '';
+    }
+
+    /**
+     * Return a URL with additional information about the payment method shown in the frontend
+     * in the corresponding language.
+     */
+    public function getSourceUrl(string $lang = 'de'): string
+    {
+        return 'https://www.mondu.ai/privacy-policy/';
+    }
+
+    public function isSwitchableTo(): bool
+    {
+        return true;
+    }
+
+    public function isSwitchableFrom(): bool
+    {
+        return true;
     }
 
     /**
@@ -56,15 +63,6 @@ abstract class GenericMonduPaymentMethod extends PaymentMethodService {
     public function isBackendActive(): bool
     {
         return true;
-    }
-
-    /**
-     * Return an URL with additional information about the payment method shown in the frontend
-     * in the corresponding language.
-     */
-    public function getSourceUrl(string $lang = 'de'): string
-    {
-        return 'https://www.mondu.ai/privacy-policy/';
     }
 
     /**
@@ -88,6 +86,6 @@ abstract class GenericMonduPaymentMethod extends PaymentMethodService {
      */
     public function getBackendIcon(): string
     {
-        return $this->getIcon();
+        return 'https://checkout.mondu.ai/logo.svg';
     }
 }

@@ -7,6 +7,7 @@ use Mondu\Contracts\MonduTransactionRepositoryContract;
 use Mondu\PaymentMethods\MonduInstallment;
 use Mondu\Repositories\MonduTransactionRepository;
 use Mondu\Services\OrderService;
+use Mondu\Services\SettingsService;
 use Plenty\Plugin\ServiceProvider;
 
 use Mondu\PaymentMethods\MonduInvoice;
@@ -39,12 +40,14 @@ class MonduServiceProvider extends ServiceProvider
         $this->getApplication()->register(MonduRouteServiceProvider::class);
         $this->getApplication()->singleton(ApiClient::class);
         $this->getApplication()->singleton(OrderService::class);
+        $this->getApplication()->singleton(SettingsService::class);
         $this->getApplication()->bind(MonduTransactionRepositoryContract::class, MonduTransactionRepository::class);
     }
 
     public function boot(PaymentMethodContainer $payContainer, Dispatcher $dispatcher)
     {
         pluginApp(WizardContainerContract::class)->register('payment-mondu-assistant', MonduAssistant::class);
+
 
         $payContainer->register('Mondu::MonduInvoice', MonduInvoice::class,
             [
@@ -81,8 +84,8 @@ class MonduServiceProvider extends ServiceProvider
             'Mondu',
             ProcedureEntry::EVENT_TYPE_ORDER,
             [
-                'de' => 'Register cancellation at Mondu',
-                'en' => 'Register cancellation at Mondu'
+                'de' => 'Mondu: Cancel Order',
+                'en' => 'Mondu: Cancel Order'
             ],
             OrderCanceled::class . '@run'
         );

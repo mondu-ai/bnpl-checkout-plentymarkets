@@ -46,7 +46,7 @@ class ExecuteMonduPayment
                 $monduTransaction = $this->monduTransactionRepository->getMonduTransaction();
                 $data = $this->apiClient->confirmOrder($monduTransaction->monduOrderUuid, ['external_reference_id' => (string) $event->getOrderId()]);
                 $this->getLogger('creatingOrder') ->error('Mondu::Debug.confirm', ['data' => json_encode($data)]);
-                $this->orderService->assignPlentyPaymentToPlentyOrder($this->orderService->createPaymentObject($paymentMethod->id), $event->getOrderId());
+                $this->orderService->assignPlentyPaymentToPlentyOrder($this->orderService->createPaymentObject($paymentMethod->id), $event->getOrderId(), $data['order']['uuid']);
 
                 $this->getLogger('creatingOrder')->error('Mondu::Debug.handle', ['order' => $event->getOrderId()]);
             } catch(\Exception $exception) {

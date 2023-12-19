@@ -47,6 +47,11 @@ class MonduTransactionRepository implements MonduTransactionRepositoryContract
         return $this->dataBase->find(MonduTransaction::class, $this->getMonduTransactionId());
     }
 
+    public function getMonduTransactionByUuid(string $uuid)
+    {
+        return $this->dataBase->find(MonduTransaction::class, $uuid);
+    }
+
     public function getMonduTransactionId(): int
     {
         return $this->frontendSessionStorageFactory->getPlugin()->getValue(self::SESSION_KEY);
@@ -62,9 +67,14 @@ class MonduTransactionRepository implements MonduTransactionRepositoryContract
         }
     }
 
-    public function setMonduOrderuuid(string $monduOrderUuid)
+    public function setMonduOrderUuid(string $monduOrderUuid)
     {
-        // TODO: Implement setMonduOrderuuid() method.
+        $transaction = $this->getMonduTransaction();
+
+        if ($transaction instanceof MonduTransaction) {
+            $transaction->monduOrderUuid = $monduOrderUuid;
+            $this->dataBase->save($transaction);
+        }
     }
 
     public function getAllTransactions(): array

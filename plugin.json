@@ -17,7 +17,8 @@
     "containers": [],
     "runOnBuild": [
         "Mondu\\Migrations\\CreatePaymentMethods_01",
-        "Mondu\\Migrations\\CreateMonduTransactionTable_02"
+        "Mondu\\Migrations\\CreateMonduTransactionTable_02",
+        "Mondu\\Migrations\\CreateSettingsTable_02"
     ],
     "platform": {
         "php": ">=7.3 <8.1"

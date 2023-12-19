@@ -3,6 +3,7 @@ namespace Mondu\Assistants;
 
 use Mondu\Assistants\SettingsHandlers\MonduAssistantSettingsHandler;
 use Plenty\Modules\System\Contracts\WebstoreRepositoryContract;
+use Plenty\Modules\System\Models\Webstore;
 use Plenty\Modules\Wizard\Services\WizardProvider;
 use Plenty\Plugin\Application;
 
@@ -32,16 +33,15 @@ class MonduAssistant extends WizardProvider
     protected function structure(): array
     {
         return [
-            /** Use translate keys for multilingualism. */
             "title" => 'MonduAssistant.assistantTitle',
             "shortDescription" => 'MonduAssistant.assistantShortDescription',
-            /** Add our settings handler class. */
+            "iconPath" => $this->getIcon(),
             "settingsHandlerClass" => MonduAssistantSettingsHandler::class,
             "translationNamespace" => "Mondu",
             "key" => "payment-mondu-assistant",
             /** The topic needs to be payment. */
             "topics" => ["payment"],
-            "priority" => 990,
+            "priority" => 100,
             "options" => [
                 "config_name" => [
                     "type" => 'select',
@@ -91,6 +91,43 @@ class MonduAssistant extends WizardProvider
                             ],
                         ],
                     ],
+                ],
+                "stepTwo" => [
+                    "title" => "MonduAssistant.stepTwoTitle",
+                    "sections" => [
+                        [
+                            "title" => 'MonduAssistant.apiKeyTitle',
+                            "description" => 'MonduAssistant.apiKeyDesc',
+                            "form" => [
+                                'apiKey' => [
+                                    'type' => 'text',
+                                    'options' => [
+                                        'name' => 'MonduAssistant.apiKey',
+                                        'required' => true
+                                    ]
+                                ],
+                                'useSandbox' => [
+                                    'type' => 'radioGroup',
+                                    'defaultValue' => 1,
+                                    'options' => [
+                                        'required' => true,
+                                        'inline' => false,
+                                        'name' => 'MonduAssistant.useSandbox',
+                                        'radioValues' => [
+                                            [
+                                                'caption' => 'MonduAssistant.useMonduSandbox',
+                                                'value' => 1
+                                            ],
+                                            [
+                                                'caption' => 'MonduAssistant.useMonduLive',
+                                                'value' => 0
+                                            ]
+                                        ]
+                                    ]
+                                ],
+                            ]
+                        ]
+                    ]
                 ]
             ]
         ];
@@ -107,14 +144,12 @@ class MonduAssistant extends WizardProvider
             $webstores = $this->webstoreRepository->loadAll();
             /** @var Webstore $webstore */
             foreach ($webstores as $webstore) {
-                /** We need a caption and a value because it is a drop-down menu. */
                 $this->webstoreValues[] = [
                     "caption" => $webstore->name,
                     "value" => $webstore->storeIdentifier,
                 ];
             }
 
-            /** Sort the array for better usability. */
             usort($this->webstoreValues, function ($a, $b) {
                 return ($a['value'] <=> $b['value']);
             });

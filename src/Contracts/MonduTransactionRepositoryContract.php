@@ -10,12 +10,17 @@ interface MonduTransactionRepositoryContract
 
     public function setOrderId(int $orderId);
 
-    public function setMonduOrderuuid(string $monduOrderUuid);
+    public function setMonduOrderUuid(string $monduOrderUuid);
 
     /**
      * @return MonduTransaction|null
      */
     public function getMonduTransaction();
+
+    /**
+     * @return MonduTransaction|null
+     */
+    public function getMonduTransactionByUuid(string $uuid);
 
     public function getMonduTransactionId(): int;
 

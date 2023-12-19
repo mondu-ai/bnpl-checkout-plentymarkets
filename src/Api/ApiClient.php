@@ -1,6 +1,7 @@
 <?php
 
 namespace Mondu\Api;
+
 use Mondu\Services\SettingsService;
 use Plenty\Modules\Plugin\Libs\Contracts\LibraryCallContract;
 
@@ -28,11 +29,8 @@ class ApiClient
     {
         return $this->apiCall(
             [
-                'base_url'       => $this->getBaseUrl(),
                 'endpoint'       => 'orders',
-                'api_token'      => $this->getApiToken(),
                 'method'         => 'POST',
-                'plugin_version' => $this->getPluginVersion(),
                 'body'           => $orderData
             ]
         );
@@ -42,12 +40,42 @@ class ApiClient
     {
         return $this->apiCall(
             [
-                'base_url'       => $this->getBaseUrl(),
                 'endpoint'       => 'orders/' . $orderUuid . '/confirm',
-                'api_token'      => $this->getApiToken(),
                 'method'         => 'POST',
-                'plugin_version' => $this->getPluginVersion(),
                 'body'           => $body
+            ]
+        );
+    }
+
+    public function cancelOrder(string $orderUuid): array
+    {
+        return $this->apiCall(
+            [
+                'endpoint'       => 'orders/' . $orderUuid . '/cancel',
+                'method' => 'POST',
+                'body' => []
+            ]
+        );
+    }
+
+    public function getWebhookSecret(): array
+    {
+        return $this->apiCall(
+            [
+                'endpoint' => 'webhooks/keys',
+                'method' => 'GET',
+                'body' => []
+            ]
+        );
+    }
+
+    public function registerWebhooks($body): array
+    {
+        return $this->apiCall(
+            [
+                'endpoint' => 'webhooks',
+                'method' => 'POST',
+                'body' => $body
             ]
         );
     }
@@ -56,18 +84,27 @@ class ApiClient
     {
         return $this->apiCall(
             [
-                'base_url' => $this->getBaseUrl(),
                 'endpoint' => 'orders/' . $orderUuid,
-                'api_token' => $this->getApiToken(),
                 'method' => 'GET',
-                'plugin_version' => $this->getPluginVersion(),
             ]
         );
     }
 
     private function apiCall(array $params): array
     {
-        return $this->libraryCallContract->call('Mondu::guzzle_connector', $params);
+        return $this->libraryCallContract->call('Mondu::guzzle_connector', array_merge(
+            $this->getDefaultParams(),
+            $params
+        ));
+    }
+
+    private function getDefaultParams(): array
+    {
+        return [
+            'base_url' => $this->getBaseUrl(),
+            'api_token' => $this->getApiKey(),
+            'plugin_version' => $this->getPluginVersion(),
+        ];
     }
 
     private function getBaseUrl(): string
@@ -75,9 +112,9 @@ class ApiClient
         return $this->settings->getApiUrl();
     }
 
-    private function getApiToken(): string
+    private function getApiKey(): string
     {
-        return $this->settings->getSetting('apiToken');
+        return $this->settings->getSetting('apiKey');
     }
 
     private function getPluginVersion(): string
