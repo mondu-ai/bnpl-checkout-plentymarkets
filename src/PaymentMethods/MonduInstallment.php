@@ -8,4 +8,9 @@ class MonduInstallment extends GenericMonduPaymentMethod
     {
         return 'Mondu Ratenzahlung - Bequem in Raten per Bankeinzug zahlen';
     }
+
+    public function getMonduIdentifier(): string
+    {
+        return 'installment';
+    }
 }

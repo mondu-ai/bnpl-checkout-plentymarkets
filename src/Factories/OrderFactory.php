@@ -127,8 +127,8 @@ class OrderFactory
             'payment_method' => $method,
             'language' => $language,
             'success_url' => $this->getDomain() . '/mondu/confirm_existing/',
-            'cancel_url' => $this->getDomain() . '/mondu/confirm_existing/',
-            'declined_url' => $this->getDomain() . '/mondu/confirm_existing/',
+            'cancel_url' => $this->getDomain() . '/mondu/cancel/?order_id=' . $orderId,
+            'declined_url' => $this->getDomain() . '/mondu/cancel/?order_id=' . $orderId,
         ];
 
         return $this->removeEmptyData($orderData);
@@ -209,8 +209,8 @@ class OrderFactory
             'payment_method' => $method,
             'language' => $language,
             'success_url' => $this->getDomain() . '/mondu/confirm/',
-            'cancel_url' => $this->getDomain() . '/mondu/confirm/',
-            'declined_url' => $this->getDomain() . '/mondu/confirm/',
+            'cancel_url' => $this->getDomain() . '/mondu/cancel/',
+            'declined_url' => $this->getDomain() . '/mondu/cancel/',
         ];
 
         return $this->removeEmptyData($orderData);

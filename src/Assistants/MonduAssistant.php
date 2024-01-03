@@ -1,7 +1,10 @@
 <?php
 namespace Mondu\Assistants;
 
+use Mondu\Assistants\Handlers\MonduAssistantActionsHandler;
+use Mondu\Assistants\Modifiers\MonduAssistantWebhookSecretModifier;
 use Mondu\Assistants\SettingsHandlers\MonduAssistantSettingsHandler;
+use Mondu\Assistants\Validators\MonduApiKeyValidator;
 use Plenty\Modules\System\Contracts\WebstoreRepositoryContract;
 use Plenty\Modules\System\Models\Webstore;
 use Plenty\Modules\Wizard\Services\WizardProvider;
@@ -37,6 +40,7 @@ class MonduAssistant extends WizardProvider
             "shortDescription" => 'MonduAssistant.assistantShortDescription',
             "iconPath" => $this->getIcon(),
             "settingsHandlerClass" => MonduAssistantSettingsHandler::class,
+            'actionHandlerClass' => MonduAssistantActionsHandler::class,
             "translationNamespace" => "Mondu",
             "key" => "payment-mondu-assistant",
             /** The topic needs to be payment. */
@@ -94,6 +98,8 @@ class MonduAssistant extends WizardProvider
                 ],
                 "stepTwo" => [
                     "title" => "MonduAssistant.stepTwoTitle",
+                    "validationClass" => MonduApiKeyValidator::class,
+                    "modifierClass" => MonduAssistantWebhookSecretModifier::class,
                     "sections" => [
                         [
                             "title" => 'MonduAssistant.apiKeyTitle',
@@ -125,6 +131,14 @@ class MonduAssistant extends WizardProvider
                                         ]
                                     ]
                                 ],
+                                'webhookSecret' => [
+                                    'type' => 'text',
+                                    'options' => [
+                                        'isReadonly' => true,
+                                        'name' => 'MonduAssistant.webhookSecret',
+                                        'required' => false
+                                    ]
+                                ]
                             ]
                         ]
                     ]

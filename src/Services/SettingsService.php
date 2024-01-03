@@ -49,7 +49,7 @@ class SettingsService {
             ->get();
     }
 
-    public function updateOrCreateSettings(array $data, int $webstoreId = null)
+    public function updateOrCreateSettings(array $data, int $webstoreId = null): bool
     {
         $webstoreId = $this->getWebstoreId($webstoreId);
 

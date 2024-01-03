@@ -54,8 +54,6 @@ class InvoiceFactory
         /** @var Document[] $documents */
         $documents = $order->documents;
 
-        $documentData = [];
-
         $invoiceDoc = null;
 
         foreach ($documents as $document) {
@@ -69,7 +67,6 @@ class InvoiceFactory
             'gross_amount_cents' => (int) round($orderAmount->invoiceTotal * 100),
             'tax_cents' => (int) round($orderAmount->vatTotal * 100),
             'shipping_price_cents' => (int) round($orderAmount->shippingCostsNet * 100),
-            'documents' => $documentData,
             'invoice_url' => $this->domainHelper->getDomain() . '/mondu/invoice/?order_uuid=' . $this->orderHelper->getOrderExternalId($order)
         ];
     }

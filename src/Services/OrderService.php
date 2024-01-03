@@ -4,15 +4,18 @@ namespace Mondu\Services;
 
 use Mondu\Api\ApiClient;
 use Mondu\Contracts\MonduTransactionRepositoryContract;
+use Mondu\Factories\CreditNoteFactory;
 use Mondu\Factories\InvoiceFactory;
 use Mondu\Helper\OrderHelper;
 use Plenty\Modules\Order\Contracts\OrderRepositoryContract;
 use Plenty\Modules\Order\Models\Order;
+use Plenty\Modules\Order\Models\OrderType;
 use Plenty\Modules\Order\Property\Models\OrderProperty;
 use Plenty\Modules\Order\Property\Models\OrderPropertyType;
 use Plenty\Modules\Payment\Contracts\PaymentOrderRelationRepositoryContract;
 use Plenty\Modules\Payment\Contracts\PaymentRepositoryContract;
 use Plenty\Modules\Payment\Models\Payment;
+use Plenty\Modules\Payment\Models\PaymentProperty;
 use Plenty\Plugin\Log\Loggable;
 
 class OrderService {
@@ -53,6 +56,11 @@ class OrderService {
      */
     private $orderHelper;
 
+    /**
+     * @var CreditNoteFactory
+     */
+    private $creditNoteFactory;
+
     public function __construct(
         PaymentRepositoryContract $paymentRepository,
         PaymentOrderRelationRepositoryContract $paymentOrderRelationRepositoryContract,
@@ -60,7 +68,8 @@ class OrderService {
         MonduTransactionRepositoryContract $monduTransactionRepository,
         InvoiceFactory $invoiceFactory,
         ApiClient $apiClient,
-        OrderHelper $orderHelper
+        OrderHelper $orderHelper,
+        CreditNoteFactory $creditNoteFactory
     ) {
         $this->paymentRepository = $paymentRepository;
         $this->paymentOrderRelationRepositoryContract = $paymentOrderRelationRepositoryContract;
@@ -69,6 +78,7 @@ class OrderService {
         $this->apiClient = $apiClient;
         $this->invoiceFactory = $invoiceFactory;
         $this->orderHelper = $orderHelper;
+        $this->creditNoteFactory = $creditNoteFactory;
     }
 
     public function preparePayment($mopId = null)
@@ -96,6 +106,36 @@ class OrderService {
         ];
 
         return $this->paymentRepository->createPayment($paymentData);
+    }
+    public function createRefundObject($payments, $creditNoteData): Payment
+    {
+        foreach($payments as $payment) {
+            $mop = $payment->mopId;
+            $parentPaymentId = $payment->id;
+        }
+
+        $refundTid = $creditNoteData['uuid'];
+        /** @var Payment $payment */
+        $payment = pluginApp(\Plenty\Modules\Payment\Models\Payment::class);
+        $payment->updateOrderPaymentStatus = true;
+        $payment->mopId = (int) $mop;
+        $payment->transactionType = Payment::TRANSACTION_TYPE_BOOKED_POSTING;
+        $payment->status = Payment::STATUS_APPROVED;
+        $payment->currency = $creditNoteData['currency'];
+        $payment->amount = $creditNoteData['gross_amount_cents'] / 100;
+        $payment->receivedAt = date('Y-m-d H:i:s');
+        $payment->type = 'debit';
+        $payment->parentId = $parentPaymentId;
+        $payment->unaccountable = 0;
+        $paymentProperty     = [];
+
+        $comments = $creditNoteData['notes'] ?? '';
+        $paymentProperty[]   = $this->getPaymentProperty(PaymentProperty::TYPE_BOOKING_TEXT, $comments);
+        $paymentProperty[]   = $this->getPaymentProperty(PaymentProperty::TYPE_TRANSACTION_ID, $refundTid);
+        $paymentProperty[]   = $this->getPaymentProperty(PaymentProperty::TYPE_ORIGIN, Payment::ORIGIN_PLUGIN);
+        $paymentProperty[]   = $this->getPaymentProperty(PaymentProperty::TYPE_EXTERNAL_TRANSACTION_STATUS, $creditNoteData['state']);
+        $payment->properties = $paymentProperty;
+        return $this->paymentRepository->createPayment($payment);
     }
 
     public function assignPlentyPaymentToPlentyOrder(Payment $payment, int $orderId, string $monduOrderUuid)
@@ -130,12 +170,7 @@ class OrderService {
 
         if ($monduUuid) {
             try {
-
-                $data = $this->apiClient->createInvoice($monduUuid, $this->invoiceFactory->buildInvoice($order->id));
-                $this->getLogger(__CLASS__.'::'.__FUNCTION__)
-                    ->error("Mondu::CreateOrderInvoiceAfter",[
-                        'data' => $data
-                    ]);
+                $this->apiClient->createInvoice($monduUuid, $this->invoiceFactory->buildInvoice($order->id));
             } catch (\Exception $e) {
                 $this->getLogger(__CLASS__.'::'.__FUNCTION__)
                     ->error("Mondu::CreateOrderInvoiceError", [
@@ -144,5 +179,50 @@ class OrderService {
                     ]);
             }
         }
+    }
+
+    public function createRefund(Order $order)
+    {
+        $monduUuid = $this->orderHelper->getOrderExternalId($order);
+
+        if($monduUuid && $order->typeId == OrderType::TYPE_CREDIT_NOTE) {
+            try {
+                $invoicesResponse = $this->apiClient->getInvoices($monduUuid);
+
+                $invoices = $invoicesResponse['invoices'];
+
+                $invoiceUuid = $invoices[0]['uuid'];
+
+                $creditNoteResponse = $this->apiClient->createCreditNote($invoiceUuid, $this->creditNoteFactory->buildCreditNote($order->id));
+
+                $parentOrderId = $order->id;
+
+                foreach($order->orderReferences as $orderReference) {
+                    $parentOrderId = $orderReference->originOrderId;
+                }
+
+                $paymentDetails = $this->paymentRepository->getPaymentsByOrderId($parentOrderId);
+
+                $refund = $this->createRefundObject($paymentDetails, $creditNoteResponse['credit_note']);
+                $this->assignPlentyPaymentToPlentyOrder($refund, $order->id, $monduUuid);
+            } catch(\Exception $e) {
+                $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+                    ->error("Mondu::CreateCreditNote", [
+                        'data' => $e->getMessage(),
+                        'trace' => $e->getTrace()
+                    ]);
+            }
+        }
+    }
+
+    public function getPaymentProperty($typeId, $value)
+    {
+        /** @var PaymentProperty $paymentProperty */
+        $paymentProperty = pluginApp(\Plenty\Modules\Payment\Models\PaymentProperty::class);
+
+        $paymentProperty->typeId = $typeId;
+        $paymentProperty->value  = (string) $value;
+
+        return $paymentProperty;
     }
 }

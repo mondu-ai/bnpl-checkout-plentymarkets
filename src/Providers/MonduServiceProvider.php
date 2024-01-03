@@ -6,9 +6,12 @@ use Mondu\Api\ApiClient;
 use Mondu\Contracts\MonduTransactionRepositoryContract;
 use Mondu\PaymentMethods\MonduInstallment;
 use Mondu\Procedures\OrderShipped;
+use Mondu\Procedures\RefundOrder;
 use Mondu\Repositories\MonduTransactionRepository;
 use Mondu\Services\OrderService;
 use Mondu\Services\SettingsService;
+use Plenty\Modules\Frontend\Events\FrontendLanguageChanged;
+use Plenty\Modules\Frontend\Events\FrontendShippingCountryChanged;
 use Plenty\Plugin\ServiceProvider;
 
 use Mondu\PaymentMethods\MonduInvoice;
@@ -53,21 +56,30 @@ class MonduServiceProvider extends ServiceProvider
         $payContainer->register('Mondu::MonduInvoice', MonduInvoice::class,
             [
                 AfterBasketChanged::class,
-                AfterBasketCreate::class
+                AfterBasketItemAdd::class,
+                AfterBasketCreate::class,
+                FrontendLanguageChanged::class,
+                FrontendShippingCountryChanged::class
             ]
         );
 
         $payContainer->register('Mondu::MonduSepa', MonduSepa::class,
             [
                 AfterBasketChanged::class,
-                AfterBasketCreate::class
+                AfterBasketItemAdd::class,
+                AfterBasketCreate::class,
+                FrontendLanguageChanged::class,
+                FrontendShippingCountryChanged::class
             ]
         );
 
         $payContainer->register('Mondu::MonduInstallment', MonduInstallment::class,
             [
                 AfterBasketChanged::class,
-                AfterBasketCreate::class
+                AfterBasketItemAdd::class,
+                AfterBasketCreate::class,
+                FrontendLanguageChanged::class,
+                FrontendShippingCountryChanged::class
             ]
         );
 
@@ -99,6 +111,16 @@ class MonduServiceProvider extends ServiceProvider
                 'en' => 'Mondu: Create Invoice'
             ],
             OrderShipped::class . '@run'
+        );
+
+        $eventProceduresService->registerProcedure(
+            'Mondu',
+            ProcedureEntry::EVENT_TYPE_ORDER,
+            [
+                'de' => 'Mondu: Create Credit Note',
+                'en' => 'Mondu: Create Credit Note'
+            ],
+            RefundOrder::class . '@run'
         );
 
         // $this->getLogger('MonduServiceProvider::boot')->error('EventProceduresService: ');

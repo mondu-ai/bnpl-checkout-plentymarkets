@@ -19,6 +19,16 @@ class ApiClient
      */
     private $settings;
 
+    /**
+     * @var string
+     */
+    private $apiKey;
+
+    /**
+     * @var string
+     */
+    private $apiUrl;
+
     public function __construct(
         LibraryCallContract $libraryCallContract,
         SettingsService $settingsService
@@ -71,6 +81,17 @@ class ApiClient
         );
     }
 
+    public function createCreditNote(string $invoiceUuid, array $body = []): array
+    {
+        return $this->apiCall(
+            [
+                'endpoint' => 'invoices/' . $invoiceUuid . '/credit_notes',
+                'method'   => 'POST',
+                'body'     => $body
+            ]
+        );
+    }
+
     public function getWebhookSecret(): array
     {
         return $this->apiCall(
@@ -103,6 +124,38 @@ class ApiClient
         );
     }
 
+    public function getInvoices(string $orderUuid): array
+    {
+        return $this->apiCall(
+            [
+                'endpoint' => 'orders/' . $orderUuid . '/invoices',
+                'method' => 'GET',
+            ]
+        );
+    }
+
+    public function getPaymentMethods(): array
+    {
+        return $this->apiCall(
+            [
+                'endpoint' => 'payment_methods',
+                'method' => 'GET',
+            ]
+        );
+    }
+
+    public function setApiKey(string $apiKey): ApiClient
+    {
+        $this->apiKey = $apiKey;
+        return $this;
+    }
+
+    public function setApiUrl(string $apiUrl): ApiClient
+    {
+        $this->apiUrl = $apiUrl;
+        return $this;
+    }
+
     private function apiCall(array $params): array
     {
         return $this->libraryCallContract->call('Mondu::guzzle_connector', array_merge(
@@ -122,12 +175,12 @@ class ApiClient
 
     private function getBaseUrl(): string
     {
-        return $this->settings->getApiUrl();
+        return $this->apiUrl ?? $this->settings->getApiUrl();
     }
 
     private function getApiKey(): string
     {
-        return $this->settings->getSetting('apiKey');
+        return $this->apiKey ?? $this->settings->getSetting('apiKey');
     }
 
     private function getPluginVersion(): string

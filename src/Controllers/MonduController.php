@@ -24,6 +24,22 @@ class MonduController extends Controller
 {
     use Loggable;
 
+    public function cancel(
+        FrontendSessionStorageFactoryContract $frontendSessionStorageFactory,
+        Response $response,
+        Request $request
+    ): \Symfony\Component\HttpFoundation\Response
+    {
+        $lang = $frontendSessionStorageFactory->getLocaleSettings()->language;
+        $orderId = $request->get('order_id');
+
+        if ($orderId) {
+            return $response->redirectTo($lang . '/confirmation/' . $orderId);
+        }
+
+        return $response->redirectTo($lang. '/checkout');
+    }
+
     public function confirm(
         FrontendSessionStorageFactoryContract $frontendSessionStorageFactory,
         Response $response,

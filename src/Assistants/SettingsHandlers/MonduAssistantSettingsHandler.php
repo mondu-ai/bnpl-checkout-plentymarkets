@@ -27,27 +27,23 @@ class MonduAssistantSettingsHandler implements WizardSettingsHandler
         /** @var SettingsService $settingsService */
         $settingsService = pluginApp(SettingsService::class);
 
-        $settingsService->updateOrCreateSettings($data, $data['config_name']);
+        $settingsService->setData($data);
 
-        $this->settingsService->setData($data);
-
-        $this->getWebhookSecret();
-
-        //TODO implement webhook endpints and functionality
         $this->registerWebhooks();
 
-        //TODO
+        $data['paymentMethods'] = $this->getPaymentMethods();
+
+        $settingsService->updateOrCreateSettings($data, $data['config_name']);
+        //TODO quality of life improvements
 //        $this->createContainer($webstoreId, $data);
         return true;
     }
 
-    private function getWebhookSecret()
+    private function getPaymentMethods()
     {
         /** @var ApiClient $apiClient */
         $apiClient = pluginApp(ApiClient::class);
-
-        //TODO save
-        $apiClient->getWebhookSecret();
+        return array_column($apiClient->getPaymentMethods()['payment_methods'], 'identifier');
     }
 
     private function registerWebhooks()

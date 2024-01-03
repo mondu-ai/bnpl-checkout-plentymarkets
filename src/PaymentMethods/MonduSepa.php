@@ -8,4 +8,9 @@ class MonduSepa extends GenericMonduPaymentMethod
     {
         return 'Mondu SEPA-Lastschrift - jetzt kaufen, später per Bankeinzug bezahlen';
     }
+
+    public function getMonduIdentifier(): string
+    {
+        return 'direct_debit';
+    }
 }
