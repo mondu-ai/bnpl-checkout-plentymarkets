@@ -12,5 +12,6 @@ class MonduRouteServiceProvider extends RouteServiceProvider
         $router->get('mondu/confirm','Mondu\Controllers\MonduController@confirm');
         $router->get('mondu/confirm_existing','Mondu\Controllers\MonduController@confirmExistingOrder');
         $router->get('mondu/init_payment','Mondu\Controllers\MonduController@reInit');
+        $router->get('mondu/invoice','Mondu\Controllers\MonduController@getInvoice');
     }
 }

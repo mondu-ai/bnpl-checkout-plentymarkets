@@ -12,7 +12,7 @@
     {% endif %}
 {% endfor %}
 
-{% if ( monduPaymentId in paymentMethodIds ) and (monduPaidStatus != 'fullyPaid') %}
+{% if ( monduPaymentId in paymentMethodIds ) and (monduPaidStatus not in ['fullyPaid', 'partlyPaid', 'overpaid']) %}
     {% set display = "block" %}
 {% else %}
     {% set display = "none" %}

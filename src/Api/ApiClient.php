@@ -4,9 +4,11 @@ namespace Mondu\Api;
 
 use Mondu\Services\SettingsService;
 use Plenty\Modules\Plugin\Libs\Contracts\LibraryCallContract;
+use Plenty\Plugin\Log\Loggable;
 
 class ApiClient
 {
+    use Loggable;
     /**
      * @var LibraryCallContract
      */
@@ -54,6 +56,17 @@ class ApiClient
                 'endpoint'       => 'orders/' . $orderUuid . '/cancel',
                 'method' => 'POST',
                 'body' => []
+            ]
+        );
+    }
+
+    public function createInvoice(string $orderUuid, array $body = []): array
+    {
+        return $this->apiCall(
+            [
+                'endpoint' => 'orders/' . $orderUuid . '/invoices',
+                'method'   => 'POST',
+                'body'     => $body
             ]
         );
     }

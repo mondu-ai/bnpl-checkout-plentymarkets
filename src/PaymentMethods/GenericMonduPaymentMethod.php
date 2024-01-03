@@ -2,10 +2,15 @@
 
 namespace Mondu\PaymentMethods;
 
-use Plenty\Modules\Payment\Method\Contracts\PaymentMethodService;
+use Plenty\Modules\Payment\Method\Services\PaymentMethodBaseService;
 
-abstract class GenericMonduPaymentMethod extends PaymentMethodService {
-    abstract public function getName(string $lang = 'de'): string;
+abstract class GenericMonduPaymentMethod extends PaymentMethodBaseService {
+    abstract public function getMonduName(string $lang = 'de'): string;
+
+    public function getName(string $lang = ""): string
+    {
+        return $this->getMonduName($lang);
+    }
 
     public function isActive(): bool
     {

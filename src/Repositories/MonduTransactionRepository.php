@@ -49,7 +49,11 @@ class MonduTransactionRepository implements MonduTransactionRepositoryContract
 
     public function getMonduTransactionByUuid(string $uuid)
     {
-        return $this->dataBase->find(MonduTransaction::class, $uuid);
+        $log = $this->dataBase->query(MonduTransaction::class)
+            ->where('monduOrderUuid', $uuid)
+            ->get();
+
+        return $log[0] ?? null;
     }
 
     public function getMonduTransactionId(): int

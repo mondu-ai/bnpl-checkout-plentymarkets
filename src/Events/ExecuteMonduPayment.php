@@ -44,6 +44,7 @@ class ExecuteMonduPayment
         if ($paymentMethod instanceof PaymentMethod) {
             try {
                 $monduTransaction = $this->monduTransactionRepository->getMonduTransaction();
+                $this->monduTransactionRepository->setOrderId($event->getOrderId());
                 $data = $this->apiClient->confirmOrder($monduTransaction->monduOrderUuid, ['external_reference_id' => (string) $event->getOrderId()]);
                 $this->getLogger('creatingOrder') ->error('Mondu::Debug.confirm', ['data' => json_encode($data)]);
                 $this->orderService->assignPlentyPaymentToPlentyOrder($this->orderService->createPaymentObject($paymentMethod->id), $event->getOrderId(), $data['order']['uuid']);

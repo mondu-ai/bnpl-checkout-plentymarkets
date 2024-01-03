@@ -5,6 +5,7 @@ namespace Mondu\Providers;
 use Mondu\Api\ApiClient;
 use Mondu\Contracts\MonduTransactionRepositoryContract;
 use Mondu\PaymentMethods\MonduInstallment;
+use Mondu\Procedures\OrderShipped;
 use Mondu\Repositories\MonduTransactionRepository;
 use Mondu\Services\OrderService;
 use Mondu\Services\SettingsService;
@@ -88,6 +89,16 @@ class MonduServiceProvider extends ServiceProvider
                 'en' => 'Mondu: Cancel Order'
             ],
             OrderCanceled::class . '@run'
+        );
+
+        $eventProceduresService->registerProcedure(
+            'Mondu',
+            ProcedureEntry::EVENT_TYPE_ORDER,
+            [
+                'de' => 'Mondu: Create Invoice',
+                'en' => 'Mondu: Create Invoice'
+            ],
+            OrderShipped::class . '@run'
         );
 
         // $this->getLogger('MonduServiceProvider::boot')->error('EventProceduresService: ');

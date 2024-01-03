@@ -4,18 +4,26 @@ namespace Mondu\Controllers;
 
 use Mondu\Api\ApiClient;
 use Mondu\Contracts\MonduTransactionRepositoryContract;
+use Mondu\Factories\InvoiceFactory;
 use Mondu\Factories\OrderFactory;
 use Mondu\Services\OrderService;
 use Mondu\Services\SettingsService;
+use Plenty\Modules\Authorization\Services\AuthHelper;
+use Plenty\Modules\Document\Models\Document;
+use Plenty\Modules\Order\Contracts\OrderRepositoryContract;
+use Plenty\Modules\Order\Documents\Contracts\OrderDocumentStorageContract;
 use Plenty\Plugin\Controller;
 use Plenty\Plugin\Http\Response;
 use Plenty\Modules\Frontend\Session\Storage\Contracts\FrontendSessionStorageFactoryContract;
 use Plenty\Modules\Plugin\Libs\Contracts\LibraryCallContract;
+use Plenty\Plugin\Log\Loggable;
 use Plenty\Plugin\Templates\Twig;
 use Plenty\Plugin\Http\Request;
 
 class MonduController extends Controller
 {
+    use Loggable;
+
     public function confirm(
         FrontendSessionStorageFactoryContract $frontendSessionStorageFactory,
         Response $response,
@@ -76,5 +84,64 @@ class MonduController extends Controller
         $monduTransactionRepository->setOrderId($orderId);
 
         return $response->json(['url' => $data['order']['hosted_checkout_url']]);
+    }
+
+    public function getInvoice(
+        Request $request,
+        Response $response,
+        MonduTransactionRepositoryContract $monduTransactionRepository,
+        OrderRepositoryContract $orderRepository,
+        OrderDocumentStorageContract $orderDocumentStorage
+    ): \Symfony\Component\HttpFoundation\Response
+    {
+        try {
+            $monduTransaction = $monduTransactionRepository->getMonduTransactionByUuid($request->get('order_uuid'));
+
+            if(!$monduTransaction) {
+                return $response->json(['error' => 'Not found'], 404);
+            }
+
+            $this->getLogger(__CLASS__.'::'.__FUNCTION__ . 'Info')
+                ->info("Mondu::Logs.getInvoice",[
+                    'order_id' => $monduTransaction->orderId,
+                    'uuid' => $monduTransaction->monduOrderUuid
+                ]);
+
+            /** @var AuthHelper $authHelper */
+            $authHelper = pluginApp(AuthHelper::class);
+
+            $order = $authHelper->processUnguarded(function() use($orderRepository, $monduTransaction) {
+                return $orderRepository->findOrderById($monduTransaction->orderId);
+            });
+
+            $documents = $order->documents;
+
+            $invoiceDoc = null;
+
+            foreach ($documents as $document) {
+                if ($document->type === Document::INVOICE) {
+                    $invoiceDoc = $orderDocumentStorage->get($document->path);
+                }
+            }
+
+            if (!$invoiceDoc) {
+                $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+                    ->info("Mondu::getInvoice",[
+                        'info' => 'Invoice Document Not found'
+                    ]);
+                return $response->json(['error' => 'Not found'], 404);
+            }
+
+            return $response->make($invoiceDoc->body, 200, [
+                'Content-Type' => 'application/pdf'
+            ]);
+        } catch (\Throwable $e) {
+            $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+                ->error("Mondu::getInvoiceError",[
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTrace()
+                ]);
+            return $response->json(['error' => 'true', 'message' => $e->getMessage()]);
+        }
     }
 }

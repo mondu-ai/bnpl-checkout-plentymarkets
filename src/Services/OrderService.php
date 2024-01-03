@@ -4,6 +4,8 @@ namespace Mondu\Services;
 
 use Mondu\Api\ApiClient;
 use Mondu\Contracts\MonduTransactionRepositoryContract;
+use Mondu\Factories\InvoiceFactory;
+use Mondu\Helper\OrderHelper;
 use Plenty\Modules\Order\Contracts\OrderRepositoryContract;
 use Plenty\Modules\Order\Models\Order;
 use Plenty\Modules\Order\Property\Models\OrderProperty;
@@ -11,8 +13,11 @@ use Plenty\Modules\Order\Property\Models\OrderPropertyType;
 use Plenty\Modules\Payment\Contracts\PaymentOrderRelationRepositoryContract;
 use Plenty\Modules\Payment\Contracts\PaymentRepositoryContract;
 use Plenty\Modules\Payment\Models\Payment;
+use Plenty\Plugin\Log\Loggable;
 
 class OrderService {
+
+    use Loggable;
     /**
      * @var PaymentRepositoryContract
      */
@@ -38,18 +43,32 @@ class OrderService {
      */
     private $apiClient;
 
+    /**
+     * @var InvoiceFactory
+     */
+    private $invoiceFactory;
+
+    /**
+     * @var OrderHelper
+     */
+    private $orderHelper;
+
     public function __construct(
         PaymentRepositoryContract $paymentRepository,
         PaymentOrderRelationRepositoryContract $paymentOrderRelationRepositoryContract,
         OrderRepositoryContract $orderRepositoryContract,
         MonduTransactionRepositoryContract $monduTransactionRepository,
-        ApiClient $apiClient
+        InvoiceFactory $invoiceFactory,
+        ApiClient $apiClient,
+        OrderHelper $orderHelper
     ) {
         $this->paymentRepository = $paymentRepository;
         $this->paymentOrderRelationRepositoryContract = $paymentOrderRelationRepositoryContract;
         $this->orderRepositoryContract = $orderRepositoryContract;
         $this->monduTransactionRepository = $monduTransactionRepository;
         $this->apiClient = $apiClient;
+        $this->invoiceFactory = $invoiceFactory;
+        $this->orderHelper = $orderHelper;
     }
 
     public function preparePayment($mopId = null)
@@ -99,22 +118,31 @@ class OrderService {
 
     public function cancelOrder(Order $order)
     {
-        $monduUuid = $this->getOrderExternalId($order);
+        $monduUuid = $this->orderHelper->getOrderExternalId($order);
         if ($monduUuid) {
             $this->apiClient->cancelOrder($monduUuid);
         }
     }
 
-    protected function getOrderExternalId(Order $order): ?string
+    public function createOrderInvoice(Order $order)
     {
-        foreach ($order->properties as $orderProperty) {
-            if ($orderProperty instanceof OrderProperty) {
-                if ($orderProperty->typeId == OrderPropertyType::EXTERNAL_ORDER_ID && !empty($orderProperty->value)) {
-                    return $orderProperty->value;
-                }
+        $monduUuid = $this->orderHelper->getOrderExternalId($order);
+
+        if ($monduUuid) {
+            try {
+
+                $data = $this->apiClient->createInvoice($monduUuid, $this->invoiceFactory->buildInvoice($order->id));
+                $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+                    ->error("Mondu::CreateOrderInvoiceAfter",[
+                        'data' => $data
+                    ]);
+            } catch (\Exception $e) {
+                $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+                    ->error("Mondu::CreateOrderInvoiceError", [
+                        'data' => $e->getMessage(),
+                        'trace' => $e->getTrace()
+                    ]);
             }
         }
-
-        return null;
     }
 }
