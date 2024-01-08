@@ -158,10 +158,19 @@ class ApiClient
 
     private function apiCall(array $params): array
     {
-        return $this->libraryCallContract->call('Mondu::guzzle_connector', array_merge(
+        $this->getLogger(__CLASS__ . '::' . __FUNCTION__)
+            ->info('Mondu::Logs.apiCall', $params);
+
+        $response = $this->libraryCallContract->call('Mondu::guzzle_connector', array_merge(
             $this->getDefaultParams(),
             $params
         ));
+
+        if (isset($response['error'])) {
+            $this->getLogger(__CLASS__ . '::' . __FUNCTION__)
+                ->error('Mondu::Logs.apiError', $response);
+        }
+        return $response;
     }
 
     private function getDefaultParams(): array
@@ -170,6 +179,7 @@ class ApiClient
             'base_url' => $this->getBaseUrl(),
             'api_token' => $this->getApiKey(),
             'plugin_version' => $this->getPluginVersion(),
+            'plugin_name' => $this->getPluginName(),
         ];
     }
 
@@ -186,5 +196,10 @@ class ApiClient
     private function getPluginVersion(): string
     {
         return $this->settings->getPluginVersion();
+    }
+
+    private function getPluginName(): string
+    {
+        return $this->settings->getPluginName();
     }
 }

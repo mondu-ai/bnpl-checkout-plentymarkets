@@ -3,6 +3,7 @@
 namespace Mondu\Assistants\Modifiers;
 
 use Mondu\Api\ApiClient;
+use Mondu\Services\SettingsService;
 use Plenty\Modules\Wizard\Contracts\WizardDataModifier as AssistantDataModifier;
 
 class MonduAssistantWebhookSecretModifier implements AssistantDataModifier
@@ -14,9 +15,13 @@ class MonduAssistantWebhookSecretModifier implements AssistantDataModifier
         /** @var ApiClient $apiClient */
         $apiClient =  pluginApp(ApiClient::class);
 
-        $webhookSecretResponse = $apiClient->getWebhookSecret();
+        if (isset($data['apiKey'])) {
+            $webhookSecretResponse = $apiClient->setApiKey($data['apiKey'])
+                ->setApiUrl($data['useSandbox'] ? SettingsService::DEMO_API_URL : SettingsService::LIVE_API_URL)
+                ->getWebhookSecret();
 
-        $data['webhookSecret'] = $webhookSecretResponse['webhook_secret'];
+            $data['webhookSecret'] = $webhookSecretResponse['webhook_secret'];
+        }
 
         return $data;
     }

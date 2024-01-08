@@ -46,14 +46,22 @@ class ExecuteMonduPayment
                 $monduTransaction = $this->monduTransactionRepository->getMonduTransaction();
                 $this->monduTransactionRepository->setOrderId($event->getOrderId());
                 $data = $this->apiClient->confirmOrder($monduTransaction->monduOrderUuid, ['external_reference_id' => (string) $event->getOrderId()]);
-                $this->getLogger('creatingOrder') ->error('Mondu::Debug.confirm', ['data' => json_encode($data)]);
-                $this->orderService->assignPlentyPaymentToPlentyOrder($this->orderService->createPaymentObject($paymentMethod->id), $event->getOrderId(), $data['order']['uuid']);
+                $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+                    ->info("Mondu::Logs.confirmOrder", [
+                        'confirm_order_data' => $data,
+                        'flow' => 'Checkout flow'
+                    ]);
 
-                $this->getLogger('creatingOrder')->error('Mondu::Debug.handle', ['order' => $event->getOrderId()]);
-            } catch(\Exception $exception) {
+                $this->orderService->assignPlentyPaymentToPlentyOrder($this->orderService->createPaymentObject($paymentMethod->id), $event->getOrderId(), $data['order']['uuid']);
+            } catch(\Exception $e) {
                 $event->setType('error');
                 $event->setValue('Internal Error');
-                $this->getLogger('creatingOrder')->logException($exception);
+
+                $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+                    ->error("Mondu::Logs.confirmOrder", [
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTrace()
+                    ]);
             }
         }
     }

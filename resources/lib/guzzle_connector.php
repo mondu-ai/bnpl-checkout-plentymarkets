@@ -7,6 +7,8 @@ $endpoint = SdkRestApi::getParam('endpoint');
 $url = rtrim($baseUrl) . '/' . ltrim($endpoint);
 $method = SdkRestApi::getParam('method');
 $body = SdkRestApi::getParam('body');
+$pluginVersion = SdkRestApi::getParam('plugin_version');
+$pluginName = SdkRestApi::getParam('plugin_name');
 
 $res = $client->request(
     $method,
@@ -14,7 +16,9 @@ $res = $client->request(
     [
         'json' => $body,
         'headers' => [
-            'Api-Token' => SdkRestApi::getParam('api_token')
+            'Api-Token' => SdkRestApi::getParam('api_token'),
+            'x-plugin-version' => $pluginVersion,
+            'x-plugin-name' => $pluginName
         ]
     ]
 );

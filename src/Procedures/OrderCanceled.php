@@ -19,6 +19,10 @@ class OrderCanceled
             $paymentMethod = $this->getMonduPaymentMethod($eventTriggered->getOrder()->methodOfPaymentId);
 
             if ($paymentMethod instanceof PaymentMethod) {
+                $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+                    ->info("Mondu::Logs.cancelingOrder",[
+                        'order_id' => (string) $eventTriggered->getOrder()->id
+                    ]);
                 /** @var OrderService $orderService */
                 $orderService = pluginApp(OrderService::class);
                 $orderService->cancelOrder($eventTriggered->getOrder());

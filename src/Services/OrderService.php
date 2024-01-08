@@ -159,6 +159,12 @@ class OrderService {
     public function cancelOrder(Order $order)
     {
         $monduUuid = $this->orderHelper->getOrderExternalId($order);
+
+        $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+            ->info("Mondu::Logs.cancelingOrder",[
+                'mondu_uuid' => (string) $monduUuid
+            ]);
+
         if ($monduUuid) {
             $this->apiClient->cancelOrder($monduUuid);
         }
@@ -167,14 +173,22 @@ class OrderService {
     public function createOrderInvoice(Order $order)
     {
         $monduUuid = $this->orderHelper->getOrderExternalId($order);
+        $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+            ->info("Mondu::Logs.creatingInvoice",[
+                'mondu_uuid' => (string) $monduUuid
+            ]);
 
         if ($monduUuid) {
             try {
-                $this->apiClient->createInvoice($monduUuid, $this->invoiceFactory->buildInvoice($order->id));
-            } catch (\Exception $e) {
+                $data = $this->apiClient->createInvoice($monduUuid, $this->invoiceFactory->buildInvoice($order->id));
                 $this->getLogger(__CLASS__.'::'.__FUNCTION__)
-                    ->error("Mondu::CreateOrderInvoiceError", [
-                        'data' => $e->getMessage(),
+                    ->info("Mondu::Logs.creatingInvoice",[
+                        'invoice_data' => $data
+                    ]);
+            } catch(\Exception $e) {
+                $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+                    ->error("Mondu::Logs.creatingInvoice", [
+                        'message' => $e->getMessage(),
                         'trace' => $e->getTrace()
                     ]);
             }
@@ -184,6 +198,10 @@ class OrderService {
     public function createRefund(Order $order)
     {
         $monduUuid = $this->orderHelper->getOrderExternalId($order);
+        $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+            ->info("Mondu::Logs.refundOrder",[
+                'mondu_uuid' => (string) $monduUuid
+            ]);
 
         if($monduUuid && $order->typeId == OrderType::TYPE_CREDIT_NOTE) {
             try {
@@ -194,6 +212,11 @@ class OrderService {
                 $invoiceUuid = $invoices[0]['uuid'];
 
                 $creditNoteResponse = $this->apiClient->createCreditNote($invoiceUuid, $this->creditNoteFactory->buildCreditNote($order->id));
+
+                $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+                    ->info("Mondu::Logs.refundOrder",[
+                        'credit_note_data' => $creditNoteResponse
+                    ]);
 
                 $parentOrderId = $order->id;
 
@@ -207,8 +230,8 @@ class OrderService {
                 $this->assignPlentyPaymentToPlentyOrder($refund, $order->id, $monduUuid);
             } catch(\Exception $e) {
                 $this->getLogger(__CLASS__.'::'.__FUNCTION__)
-                    ->error("Mondu::CreateCreditNote", [
-                        'data' => $e->getMessage(),
+                    ->error("Mondu::Logs.refundOrder", [
+                        'message' => $e->getMessage(),
                         'trace' => $e->getTrace()
                     ]);
             }

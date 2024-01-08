@@ -16,10 +16,11 @@ use Plenty\Modules\Order\Models\OrderAmount;
 use Plenty\Modules\Order\Models\OrderItem;
 use Plenty\Modules\Order\Models\OrderItemAmount;
 use Plenty\Modules\Order\Models\OrderItemType;
+use Plenty\Plugin\Log\Loggable;
 
 class OrderFactory
 {
-    use MonduMethodTrait;
+    use MonduMethodTrait, Loggable;
 
     /**
      * @var OrderRepositoryContract
@@ -45,10 +46,17 @@ class OrderFactory
             $method = $this->getMonduPaymentMethodName($mopId);
 
             if (!$orderId) {
-                return $this->buildCheckoutOrder($method, $language);
+                $data = $this->buildCheckoutOrder($method, $language);
+            } else {
+                $data = $this->buildExistingOrder($orderId, $method, $language);
             }
 
-            return $this->buildExistingOrder($orderId, $method, $language);
+            $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+                ->info("Mondu::Logs.createOrder", [
+                    'order_factory_data' => $data
+                ]);
+
+            return $data;
         } catch(\Exception $e) {
             return [];
         }

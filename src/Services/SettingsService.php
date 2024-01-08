@@ -8,7 +8,8 @@ use Plenty\Modules\Plugin\PluginSet\Contracts\PluginSetRepositoryContract;
 use Plenty\Plugin\Application;
 
 class SettingsService {
-    public const PLUGIN_VERSION = '0.0.1';
+    public const PLUGIN_VERSION = '1.0.0';
+    public const PLUGIN_NAME = 'plentymarkets';
     public const DEMO_API_URL = 'https://api.stage.mondu.ai/api/v1';
     public const LIVE_API_URL = 'https://api.mondu.ai/api/v1';
 
@@ -42,6 +43,11 @@ class SettingsService {
     public function getPluginVersion(): string
     {
         return self::PLUGIN_VERSION;
+    }
+
+    public function getPluginName(): string
+    {
+        return self::PLUGIN_NAME;
     }
 
     public function getSettings() {

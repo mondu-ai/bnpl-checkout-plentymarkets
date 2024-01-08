@@ -10,7 +10,6 @@ use Plenty\Modules\System\Models\Webstore;
 use Plenty\Modules\Wizard\Services\WizardProvider;
 use Plenty\Plugin\Application;
 
-//TODO connected with plugin configuration ( To be done later )
 class MonduAssistant extends WizardProvider
 {
     /**

@@ -9,9 +9,11 @@ use Plenty\Modules\Document\Models\Document;
 use Plenty\Modules\Order\Contracts\OrderRepositoryContract;
 use Plenty\Modules\Order\Documents\Contracts\OrderDocumentStorageContract;
 use Plenty\Modules\Order\Models\OrderAmount;
+use Plenty\Plugin\Log\Loggable;
 
 class InvoiceFactory
 {
+    use Loggable;
     /**
      * @var OrderRepositoryContract
      */
@@ -62,12 +64,19 @@ class InvoiceFactory
             }
         }
 
-        return [
-            'external_reference_id' => (string) $invoiceDoc['numberWithPrefix'] ?? $orderId,
+        $data = [
+            'external_reference_id' => (string) ($invoiceDoc['numberWithPrefix'] ?? $orderId),
             'gross_amount_cents' => (int) round($orderAmount->invoiceTotal * 100),
             'tax_cents' => (int) round($orderAmount->vatTotal * 100),
             'shipping_price_cents' => (int) round($orderAmount->shippingCostsNet * 100),
             'invoice_url' => $this->domainHelper->getDomain() . '/mondu/invoice/?order_uuid=' . $this->orderHelper->getOrderExternalId($order)
         ];
+
+        $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+            ->info("Mondu::Logs.creatingInvoice", [
+                'invoice_factory_data' => $data
+            ]);
+
+        return $data;
     }
 }

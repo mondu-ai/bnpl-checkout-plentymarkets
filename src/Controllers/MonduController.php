@@ -33,6 +33,12 @@ class MonduController extends Controller
         $lang = $frontendSessionStorageFactory->getLocaleSettings()->language;
         $orderId = $request->get('order_id');
 
+        $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+            ->info("Mondu::Logs.orderCanceled", [
+                'order_id' => (string) $orderId,
+                'lang' => $lang
+            ]);
+
         if ($orderId) {
             return $response->redirectTo($lang . '/confirmation/' . $orderId);
         }
@@ -53,6 +59,12 @@ class MonduController extends Controller
 
         $monduTransactionRepository->createMonduTransaction($monduOrderUuid);
 
+        $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+            ->info("Mondu::Logs.confirmOrder", [
+                'mondu_uuid' => (string) $monduOrderUuid,
+                'flow' => 'Checkout flow'
+            ]);
+
         return $response->redirectTo($lang . '/place-order');
     }
 
@@ -71,10 +83,22 @@ class MonduController extends Controller
 
         $monduOrderUuid = $request->get('order_uuid');
 
+        $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+            ->info("Mondu::Logs.confirmOrder", [
+                'order_id' => (string) $orderId,
+                'mondu_uuid' => (string) $monduOrderUuid,
+                'flow' => 'Existing order flow'
+            ]);
+
         $lang = $frontendSessionStorageFactory->getLocaleSettings()->language;
 
-        //TODO validate response
-        $apiClient->confirmOrder($monduOrderUuid, ['external_reference_id' => (string) $orderId]);
+        $data = $apiClient->confirmOrder($monduOrderUuid, ['external_reference_id' => (string) $orderId]);
+
+        $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+            ->info("Mondu::Logs.confirmOrder", [
+                'confirm_order_data' => $data,
+                'flow' => 'Existing order flow'
+            ]);
 
         $orderService->assignPlentyPaymentToPlentyOrder($orderService->createPaymentObject(6033), $orderId, $monduOrderUuid);
 
@@ -94,7 +118,21 @@ class MonduController extends Controller
         $mopId = $request->get('mop_id');
         $lang = $frontendSessionStorageFactory->getLocaleSettings()->language;
 
+        $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+            ->info("Mondu::Logs.createOrder", [
+                'order_id' => (string) $orderId,
+                'mop_id' => (string) $mopId,
+                'lang' => (string) $lang,
+                'flow' => 'Existing order flow'
+            ]);
+
         $data = $apiClient->createOrder($orderFactory->buildOrder($mopId, $lang, $orderId));
+
+        $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+            ->info("Mondu::Logs.createOrder", [
+                'create_order_data' => $data,
+                'flow' => 'Existing order flow'
+            ]);
 
         $monduTransactionRepository->createMonduTransaction($data['order']['uuid']);
         $monduTransactionRepository->setOrderId($orderId);
@@ -142,7 +180,7 @@ class MonduController extends Controller
 
             if (!$invoiceDoc) {
                 $this->getLogger(__CLASS__.'::'.__FUNCTION__)
-                    ->info("Mondu::getInvoice",[
+                    ->info("Mondu::Logs.getInvoice",[
                         'info' => 'Invoice Document Not found'
                     ]);
                 return $response->json(['error' => 'Not found'], 404);
@@ -151,13 +189,13 @@ class MonduController extends Controller
             return $response->make($invoiceDoc->body, 200, [
                 'Content-Type' => 'application/pdf'
             ]);
-        } catch (\Throwable $e) {
+        } catch(\Throwable $e) {
             $this->getLogger(__CLASS__.'::'.__FUNCTION__)
-                ->error("Mondu::getInvoiceError",[
+                ->error("Mondu::Logs.getInvoice",[
                     'error' => $e->getMessage(),
                     'trace' => $e->getTrace()
                 ]);
-            return $response->json(['error' => 'true', 'message' => $e->getMessage()]);
+            return $response->json(['error' => 'true']);
         }
     }
 }

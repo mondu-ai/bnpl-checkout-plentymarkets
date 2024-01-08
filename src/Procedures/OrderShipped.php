@@ -19,6 +19,10 @@ class OrderShipped
             $paymentMethod = $this->getMonduPaymentMethod($eventTriggered->getOrder()->methodOfPaymentId);
 
             if ($paymentMethod instanceof PaymentMethod) {
+                $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+                    ->info("Mondu::Logs.creatingInvoice",[
+                        'order_id' => (string) $eventTriggered->getOrder()->id
+                    ]);
                 /** @var OrderService $orderService */
                 $orderService = pluginApp(OrderService::class);
                 $orderService->createOrderInvoice($eventTriggered->getOrder());

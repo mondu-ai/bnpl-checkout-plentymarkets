@@ -18,6 +18,10 @@ class RefundOrder
         if ($eventTriggered->getOrder() instanceof Order) {
             $paymentMethod = $this->getMonduPaymentMethod($eventTriggered->getOrder()->methodOfPaymentId);
             if ($paymentMethod instanceof PaymentMethod) {
+                $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+                    ->info("Mondu::Logs.refundOrder",[
+                        'order_id' => (string) $eventTriggered->getOrder()->id
+                    ]);
                 /** @var OrderService $orderService */
                 $orderService = pluginApp(OrderService::class);
                 $orderService->createRefund($eventTriggered->getOrder());

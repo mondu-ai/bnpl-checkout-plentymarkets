@@ -46,13 +46,32 @@ class PrepareMonduPayment
             try {
                 $lang = $this->frontendSessionStorageFactory->getLocaleSettings()->language;
 
+                $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+                    ->info("Mondu::Logs.createOrder", [
+                        'lang' => (string) $lang,
+                        'mop_id' => $event->getMop(),
+                        'flow' => 'Checkout flow'
+                    ]);
+
                 $data = $this->apiClient->createOrder($this->orderFactory->buildOrder($event->getMop(), $lang));
+
+                $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+                    ->info("Mondu::Logs.createOrder", [
+                        'create_order_data' => $data,
+                        'flow' => 'Checkout flow'
+                    ]);
+
                 $event->setValue($data['order']['hosted_checkout_url']);
                 $event->setType('redirectUrl');
-            } catch(\Exception $exception) {
+            } catch(\Exception $e) {
                 $event->setType(GetPaymentMethodContent::RETURN_TYPE_ERROR);
-                $event->setValue($exception->getMessage());
-                $this->getLogger('creatingOrder')->logException($exception);
+                $event->setValue($e->getMessage());
+
+                $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+                    ->error("Mondu::Logs.confirmOrder", [
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTrace()
+                    ]);
             }
         }
     }
