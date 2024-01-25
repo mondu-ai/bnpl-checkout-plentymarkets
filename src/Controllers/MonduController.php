@@ -4,10 +4,9 @@ namespace Mondu\Controllers;
 
 use Mondu\Api\ApiClient;
 use Mondu\Contracts\MonduTransactionRepositoryContract;
-use Mondu\Factories\InvoiceFactory;
 use Mondu\Factories\OrderFactory;
 use Mondu\Services\OrderService;
-use Mondu\Services\SettingsService;
+use Mondu\Traits\MonduMethodTrait;
 use Plenty\Modules\Authorization\Services\AuthHelper;
 use Plenty\Modules\Document\Models\Document;
 use Plenty\Modules\Order\Contracts\OrderRepositoryContract;
@@ -15,14 +14,13 @@ use Plenty\Modules\Order\Documents\Contracts\OrderDocumentStorageContract;
 use Plenty\Plugin\Controller;
 use Plenty\Plugin\Http\Response;
 use Plenty\Modules\Frontend\Session\Storage\Contracts\FrontendSessionStorageFactoryContract;
-use Plenty\Modules\Plugin\Libs\Contracts\LibraryCallContract;
 use Plenty\Plugin\Log\Loggable;
-use Plenty\Plugin\Templates\Twig;
 use Plenty\Plugin\Http\Request;
+use Plenty\Plugin\Translation\Translator;
 
 class MonduController extends Controller
 {
-    use Loggable;
+    use Loggable, MonduMethodTrait;
 
     public function cancel(
         FrontendSessionStorageFactoryContract $frontendSessionStorageFactory,
@@ -74,7 +72,8 @@ class MonduController extends Controller
         Request $request,
         ApiClient $apiClient,
         MonduTransactionRepositoryContract $monduTransactionRepository,
-        OrderService $orderService
+        OrderService $orderService,
+        Translator $translator
     ): \Symfony\Component\HttpFoundation\Response
     {
         $monduTransaction = $monduTransactionRepository->getMonduTransaction();
@@ -94,15 +93,39 @@ class MonduController extends Controller
 
         $data = $apiClient->confirmOrder($monduOrderUuid, ['external_reference_id' => (string) $orderId]);
 
+        if ($data['error']) {
+            return $response->json([
+                'error' => [
+                    'message' => $translator->trans('Mondu::Errors.errorPlacingOrder'),
+                    'code' => 0
+                ]
+            ], 422);
+        }
+
+
         $this->getLogger(__CLASS__.'::'.__FUNCTION__)
             ->info("Mondu::Logs.confirmOrder", [
                 'confirm_order_data' => $data,
                 'flow' => 'Existing order flow'
             ]);
 
-        $orderService->assignPlentyPaymentToPlentyOrder($orderService->createPaymentObject(6033), $orderId, $monduOrderUuid);
+        try {
+            $getOrderResponse = $apiClient->getOrder($data['order']['uuid']);
 
-        return $response->redirectTo($lang . '/confirmation/' . $orderId);
+            $orderPaymentMethod = $getOrderResponse['order']['payment_method'];
+            $mopId = $this->getMopIdFromMonduName($orderPaymentMethod);
+
+            $orderService->assignPlentyPaymentToPlentyOrder($orderService->createPaymentObject($mopId), $orderId, $monduOrderUuid);
+
+            return $response->redirectTo($lang . '/confirmation/' . $orderId);
+        } catch (\Exception $e) {
+            return $response->json([
+                'error' => [
+                    'message' => $translator->trans('Mondu::Errors.errorPlacingOrder'),
+                    'code' => 0
+                ]
+            ], 422);
+        }
     }
 
     public function reInit(
@@ -111,7 +134,8 @@ class MonduController extends Controller
         OrderFactory $orderFactory,
         ApiClient $apiClient,
         MonduTransactionRepositoryContract $monduTransactionRepository,
-        FrontendSessionStorageFactoryContract $frontendSessionStorageFactory
+        FrontendSessionStorageFactoryContract $frontendSessionStorageFactory,
+        Translator $translator
     ): \Symfony\Component\HttpFoundation\Response
     {
         $orderId = $request->get('order_id');
@@ -127,6 +151,15 @@ class MonduController extends Controller
             ]);
 
         $data = $apiClient->createOrder($orderFactory->buildOrder($mopId, $lang, $orderId));
+
+        if ($data['error']) {
+            return $response->json([
+                'error' => [
+                    'message' => $translator->trans('Mondu::Errors.errorPlacingOrder'),
+                    'code' => 0
+                ]
+            ], 422);
+        }
 
         $this->getLogger(__CLASS__.'::'.__FUNCTION__)
             ->info("Mondu::Logs.createOrder", [

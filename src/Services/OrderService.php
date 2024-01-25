@@ -85,10 +85,14 @@ class OrderService {
     {
     }
 
-    public function createPaymentObject(int $mopId, array $monduOrderData = []): Payment
+    public function createPaymentObject(int $mopId, array $monduOrderData = null): Payment
     {
         $transaction = $this->monduTransactionRepository->getMonduTransaction();
-        $monduOrderData = $this->apiClient->getOrder($transaction->monduOrderUuid);
+
+        if (!$monduOrderData) {
+            $monduOrderData = $this->apiClient->getOrder($transaction->monduOrderUuid);
+        }
+
         $monduOrder = $monduOrderData['order'];
 
         $paymentData = [];

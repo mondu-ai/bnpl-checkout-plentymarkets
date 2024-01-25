@@ -34,4 +34,26 @@ trait MonduMethodTrait
 
         return $mapping[$paymentMethod->paymentKey] ?? 'invoice';
     }
+
+    private function getMopIdFromMonduName(string $monduPaymentMethod): ?int
+    {
+        $mapping = [
+            'invoice' => 'MonduInvoice',
+            'direct_debit' => 'MonduSepa',
+            'installment' => 'MonduInstallment'
+        ];
+
+        /** @var PaymentMethodRepositoryContract $paymentMethodRepository */
+        $paymentMethodRepository = pluginApp(PaymentMethodRepositoryContract::class);
+        $paymentMethods          = $paymentMethodRepository->allForPlugin('Mondu');
+        foreach ($paymentMethods as $paymentMethod) {
+            if ($paymentMethod instanceof PaymentMethod) {
+                if (isset($mapping[$monduPaymentMethod]) && $paymentMethod->paymentKey == $mapping[$monduPaymentMethod]) {
+                    return $paymentMethod->id;
+                }
+            }
+        }
+
+        return null;
+    }
 }

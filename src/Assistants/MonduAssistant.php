@@ -88,6 +88,10 @@ class MonduAssistant extends WizardProvider
                                                 'caption' => 'MonduAssistant.uk',
                                                 'value' => 'UK',
                                             ],
+                                            [
+                                                'caption' => 'MonduAssistant.be',
+                                                'value' => 'BE'
+                                            ]
                                         ],
                                     ],
                                 ],

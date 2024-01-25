@@ -8,6 +8,7 @@ use Mondu\Traits\MonduMethodTrait;
 use Plenty\Modules\Payment\Events\Checkout\ExecutePayment;
 use Plenty\Plugin\Log\Loggable;
 use Plenty\Modules\Payment\Method\Models\PaymentMethod;
+use Plenty\Plugin\Translation\Translator;
 
 class ExecuteMonduPayment
 {
@@ -28,14 +29,21 @@ class ExecuteMonduPayment
      */
     private $apiClient;
 
+    /**
+     * @var Translator
+     */
+    private $translator;
+
     public function __construct(
         OrderService $orderService,
         MonduTransactionRepositoryContract $monduTransactionRepository,
-        ApiClient $apiClient
+        ApiClient $apiClient,
+        Translator $translator
     ) {
         $this->orderService = $orderService;
         $this->monduTransactionRepository = $monduTransactionRepository;
         $this->apiClient = $apiClient;
+        $this->translator = $translator;
     }
 
     public function handle(ExecutePayment $event) {
@@ -55,7 +63,7 @@ class ExecuteMonduPayment
                 $this->orderService->assignPlentyPaymentToPlentyOrder($this->orderService->createPaymentObject($paymentMethod->id), $event->getOrderId(), $data['order']['uuid']);
             } catch(\Exception $e) {
                 $event->setType('error');
-                $event->setValue('Internal Error');
+                $event->setValue($this->translator->trans('Mondu::Errors.errorPlacingOrder'));
 
                 $this->getLogger(__CLASS__.'::'.__FUNCTION__)
                     ->error("Mondu::Logs.confirmOrder", [

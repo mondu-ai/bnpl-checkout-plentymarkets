@@ -26,6 +26,7 @@ abstract class GenericMonduPaymentMethod extends PaymentMethodBaseService {
     protected $countryRepositoryContract;
 
     abstract public function getMonduName(string $lang = 'de'): string;
+    abstract public function getMonduDescription(string $lang = 'de'): string;
     abstract public function getMonduIdentifier(): string;
 
     public function __construct(
@@ -73,7 +74,7 @@ abstract class GenericMonduPaymentMethod extends PaymentMethodBaseService {
 
     public function getDescription(string $lang = 'de'): string
     {
-        return '';
+        return $this->getMonduDescription($lang);
     }
 
     /**
@@ -82,7 +83,17 @@ abstract class GenericMonduPaymentMethod extends PaymentMethodBaseService {
      */
     public function getSourceUrl(string $lang = 'de'): string
     {
-        return 'https://www.mondu.ai/privacy-policy/';
+        $country = $this->countryRepositoryContract->getCountryById($this->checkout->getShippingCountryId());
+
+        if($country->isoCode2 === 'GB') {
+            return "https://www.mondu.ai/en-gb/gdpr-notification-for-buyers/";
+        }
+
+        if ($lang === 'en') {
+            return 'https://www.mondu.ai/gdpr-notification-for-buyers/';
+        }
+
+        return "https://mondu.ai/{$lang}/gdpr-notification-for-buyers";
     }
 
     public function isSwitchableTo(): bool

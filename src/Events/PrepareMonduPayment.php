@@ -8,6 +8,7 @@ use Plenty\Modules\Payment\Events\Checkout\GetPaymentMethodContent;
 use Mondu\Traits\MonduMethodTrait;
 use Plenty\Plugin\Log\Loggable;
 use Plenty\Modules\Payment\Method\Models\PaymentMethod;
+use Plenty\Plugin\Translation\Translator;
 
 class PrepareMonduPayment
 {
@@ -28,15 +29,21 @@ class PrepareMonduPayment
      */
     private $frontendSessionStorageFactory;
 
+    /**
+     * @var Translator
+     */
+    private $translator;
+
     public function __construct(
         ApiClient $apiClient,
         OrderFactory $orderFactory,
-        FrontendSessionStorageFactoryContract $frontendSessionStorageFactory
-
+        FrontendSessionStorageFactoryContract $frontendSessionStorageFactory,
+        Translator $translator
     ) {
         $this->apiClient = $apiClient;
         $this->orderFactory = $orderFactory;
         $this->frontendSessionStorageFactory = $frontendSessionStorageFactory;
+        $this->translator = $translator;
     }
 
     public function handle(GetPaymentMethodContent $event) {
@@ -65,10 +72,10 @@ class PrepareMonduPayment
                 $event->setType('redirectUrl');
             } catch(\Exception $e) {
                 $event->setType(GetPaymentMethodContent::RETURN_TYPE_ERROR);
-                $event->setValue($e->getMessage());
+                $event->setValue($this->translator->trans('Mondu::Errors.errorPlacingOrder'));
 
                 $this->getLogger(__CLASS__.'::'.__FUNCTION__)
-                    ->error("Mondu::Logs.confirmOrder", [
+                    ->error("Mondu::Logs.createOrder", [
                         'error' => $e->getMessage(),
                         'trace' => $e->getTrace()
                     ]);
