@@ -104,8 +104,12 @@ class OrderService {
 
         $paymentData['properties'] = [
             [
-                'typeId'  => 1,
+                'typeId'  => PaymentProperty::TYPE_TRANSACTION_ID,
                 'value'   => $monduOrder['uuid']
+            ],
+            [
+                'typeId' => PaymentProperty::TYPE_PAYMENT_TEXT,
+                'value' => json_encode($monduOrder['bank_account'])
             ]
         ];
 
@@ -170,8 +174,10 @@ class OrderService {
             ]);
 
         if ($monduUuid) {
-            $this->apiClient->cancelOrder($monduUuid);
+            return $this->apiClient->cancelOrder($monduUuid);
         }
+
+        return ['error' => 1];
     }
 
     public function createOrderInvoice(Order $order)
@@ -189,12 +195,14 @@ class OrderService {
                     ->info("Mondu::Logs.creatingInvoice",[
                         'invoice_data' => $data
                     ]);
+                return $data;
             } catch(\Exception $e) {
                 $this->getLogger(__CLASS__.'::'.__FUNCTION__)
                     ->error("Mondu::Logs.creatingInvoice", [
                         'message' => $e->getMessage(),
                         'trace' => $e->getTrace()
                     ]);
+                return ['error' => 1];
             }
         }
     }
@@ -214,7 +222,14 @@ class OrderService {
                 $invoices = $invoicesResponse['invoices'];
 
                 $invoiceUuid = $invoices[0]['uuid'];
+                if (!$invoiceUuid) {
+                    $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+                        ->info("Mondu::Logs.refundOrder",[
+                            'message' => 'No invoice found for credit note',
+                        ]);
 
+                    return ['error' => 1];
+                }
                 $creditNoteResponse = $this->apiClient->createCreditNote($invoiceUuid, $this->creditNoteFactory->buildCreditNote($order->id));
 
                 $this->getLogger(__CLASS__.'::'.__FUNCTION__)
@@ -232,17 +247,20 @@ class OrderService {
 
                 $refund = $this->createRefundObject($paymentDetails, $creditNoteResponse['credit_note']);
                 $this->assignPlentyPaymentToPlentyOrder($refund, $order->id, $monduUuid);
+                return $refund;
             } catch(\Exception $e) {
                 $this->getLogger(__CLASS__.'::'.__FUNCTION__)
                     ->error("Mondu::Logs.refundOrder", [
                         'message' => $e->getMessage(),
                         'trace' => $e->getTrace()
                     ]);
+
+                return ['error' => 1];
             }
         }
     }
 
-    public function getPaymentProperty($typeId, $value)
+    public function getPaymentProperty($typeId, $value): PaymentProperty
     {
         /** @var PaymentProperty $paymentProperty */
         $paymentProperty = pluginApp(\Plenty\Modules\Payment\Models\PaymentProperty::class);

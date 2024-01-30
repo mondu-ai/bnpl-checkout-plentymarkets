@@ -39,7 +39,7 @@ class MonduAssistantSettingsHandler implements WizardSettingsHandler
         return true;
     }
 
-    private function getPaymentMethods()
+    private function getPaymentMethods(): array
     {
         /** @var ApiClient $apiClient */
         $apiClient = pluginApp(ApiClient::class);

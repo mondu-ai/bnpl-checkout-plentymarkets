@@ -20,16 +20,17 @@
 
 <button style="
     background-color: #8B4AFF;
-    color: white;
+    color: white !important;
     border: none;
     padding: 0.25rem;
     width: 100%;
-    font-size: 1.25rem;
+    font-size: 1rem;
     margin-top: .5rem;
     display: {{ display }};
 "
     id="mondu-init-payment"
-    onClick="initMonduCheckout({{ order.id }}, {{ monduPaymentId }})"
+    onClick="initMonduCheckout({{ order.id }}, {{ monduPaymentId }}, this)"
+    class="btn btn-block"
 >
-    Pay Via Mondu
+    {{trans("Mondu::PaymentMethods.paymentButton")}}
 </button>

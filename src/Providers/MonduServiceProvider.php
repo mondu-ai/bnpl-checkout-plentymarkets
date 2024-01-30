@@ -4,14 +4,17 @@ namespace Mondu\Providers;
 
 use Mondu\Api\ApiClient;
 use Mondu\Contracts\MonduTransactionRepositoryContract;
+use Mondu\Events\OrderPdfGeneration;
 use Mondu\PaymentMethods\MonduInstallment;
 use Mondu\Procedures\OrderShipped;
 use Mondu\Procedures\RefundOrder;
 use Mondu\Repositories\MonduTransactionRepository;
 use Mondu\Services\OrderService;
 use Mondu\Services\SettingsService;
+use Plenty\Modules\EventProcedures\Services\Entries\TriggerEntry;
 use Plenty\Modules\Frontend\Events\FrontendLanguageChanged;
 use Plenty\Modules\Frontend\Events\FrontendShippingCountryChanged;
+use Plenty\Modules\Order\Pdf\Events\OrderPdfGenerationEvent;
 use Plenty\Plugin\ServiceProvider;
 
 use Mondu\PaymentMethods\MonduInvoice;

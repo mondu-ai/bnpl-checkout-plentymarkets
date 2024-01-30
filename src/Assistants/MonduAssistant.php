@@ -7,6 +7,8 @@ use Mondu\Assistants\SettingsHandlers\MonduAssistantSettingsHandler;
 use Mondu\Assistants\Validators\MonduApiKeyValidator;
 use Plenty\Modules\System\Contracts\WebstoreRepositoryContract;
 use Plenty\Modules\System\Models\Webstore;
+use Plenty\Modules\User\Contracts\UserRepositoryContract;
+use Plenty\Modules\User\Models\User;
 use Plenty\Modules\Wizard\Services\WizardProvider;
 use Plenty\Plugin\Application;
 
@@ -18,14 +20,21 @@ class MonduAssistant extends WizardProvider
     private $webstoreRepository;
 
     /**
+     * @var UserRepositoryContract
+     */
+    private $userRepository;
+
+    /**
      * @var array
      */
     private $webstoreValues;
 
     public function __construct(
-        WebstoreRepositoryContract $webstoreRepository
+        WebstoreRepositoryContract $webstoreRepository,
+        UserRepositoryContract $userRepository
     ) {
         $this->webstoreRepository = $webstoreRepository;
+        $this->userRepository = $userRepository;
     }
 
     /**
@@ -86,7 +95,7 @@ class MonduAssistant extends WizardProvider
                                             ],
                                             [
                                                 'caption' => 'MonduAssistant.uk',
-                                                'value' => 'UK',
+                                                'value' => 'GB',
                                             ],
                                             [
                                                 'caption' => 'MonduAssistant.be',
@@ -143,9 +152,34 @@ class MonduAssistant extends WizardProvider
                                     ]
                                 ]
                             ]
+                        ],
+                        [
+                            'title' => 'MonduAssistant.titleOrderNote',
+                            'description' => 'MonduAssistant.descriptionOrderNote',
+                            'form' => [
+                                'backendUserToggle' => [
+                                    'type' => 'toggle',
+                                    'defaultValue' => false,
+                                    'options' => [
+                                        'name' => 'MonduAssistant.toggleBackendUser',
+                                        'required' => false
+                                    ]
+                                ],
+                                'backendUserId' => [
+                                    'type' => 'select',
+                                    'isVisible' => 'backendUserToggle',
+                                    'defaultValue' => 0,
+                                    'options' => [
+                                        'name' => 'MonduAssistant.inputBackendUserId',
+                                        'tooltip' => 'MonduAssistant.descriptionBackendUserId',
+                                        'required' => false,
+                                        'listBoxValues' => $this->getUserList()
+                                    ]
+                                ]
+                            ]
                         ]
                     ]
-                ]
+                ],
             ]
         ];
     }
@@ -173,5 +207,23 @@ class MonduAssistant extends WizardProvider
         }
 
         return $this->webstoreValues;
+    }
+
+    /**
+     * @return array
+     */
+    private function getUserList():array
+    {
+        $userList = $this->userRepository->getAll();
+        $users = [];
+        /** @var User $user */
+        foreach ($userList as $user) {
+            $users[] = [
+                'caption' => $user->realName,
+                'value' => $user->id
+            ];
+        }
+
+        return $users;
     }
 }

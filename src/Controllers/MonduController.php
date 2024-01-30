@@ -113,12 +113,24 @@ class MonduController extends Controller
             $getOrderResponse = $apiClient->getOrder($data['order']['uuid']);
 
             $orderPaymentMethod = $getOrderResponse['order']['payment_method'];
-            $mopId = $this->getMopIdFromMonduName($orderPaymentMethod);
 
-            $orderService->assignPlentyPaymentToPlentyOrder($orderService->createPaymentObject($mopId), $orderId, $monduOrderUuid);
+            /** @var AuthHelper $authHelper */
+            $authHelper = pluginApp(AuthHelper::class);
+
+            $authHelper->processUnguarded(function() use($orderPaymentMethod, $orderId, $monduOrderUuid, $orderService) {
+                $mopId = $this->getMopIdFromMonduName($orderPaymentMethod);
+
+                $orderService->assignPlentyPaymentToPlentyOrder($orderService->createPaymentObject($mopId), $orderId, $monduOrderUuid);
+            });
 
             return $response->redirectTo($lang . '/confirmation/' . $orderId);
         } catch (\Exception $e) {
+            $this->getLogger(__CLASS__.'::'.__FUNCTION__)
+                ->info("Mondu::Logs.confirmOrder", [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTrace()
+                ]);
+
             return $response->json([
                 'error' => [
                     'message' => $translator->trans('Mondu::Errors.errorPlacingOrder'),

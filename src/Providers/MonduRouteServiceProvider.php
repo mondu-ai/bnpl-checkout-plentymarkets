@@ -15,6 +15,6 @@ class MonduRouteServiceProvider extends RouteServiceProvider
         $router->get('mondu/init_payment','Mondu\Controllers\MonduController@reInit');
         $router->get('mondu/invoice','Mondu\Controllers\MonduController@getInvoice');
 
-        $router->get('mondu/webhook','Mondu\Controllers\MonduWebhooksController@webhooks');
+        $router->post('mondu/webhook','Mondu\Controllers\MonduWebhooksController@webhooks');
     }
 }

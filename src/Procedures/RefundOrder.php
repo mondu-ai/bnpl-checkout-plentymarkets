@@ -3,6 +3,7 @@
 namespace Mondu\Procedures;
 
 use Mondu\Services\OrderService;
+use Mondu\Traits\MonduCommentTrait;
 use Mondu\Traits\MonduMethodTrait;
 use Plenty\Modules\EventProcedures\Events\EventProceduresTriggered;
 use Plenty\Modules\Order\Models\Order;
@@ -11,7 +12,7 @@ use Plenty\Plugin\Log\Loggable;
 
 class RefundOrder
 {
-    use MonduMethodTrait, Loggable;
+    use MonduMethodTrait, Loggable, MonduCommentTrait;
 
     public function run(EventProceduresTriggered $eventTriggered)
     {
@@ -24,7 +25,13 @@ class RefundOrder
                     ]);
                 /** @var OrderService $orderService */
                 $orderService = pluginApp(OrderService::class);
-                $orderService->createRefund($eventTriggered->getOrder());
+                $response =  $orderService->createRefund($eventTriggered->getOrder());
+
+                if ($response['error']) {
+                    $this->addOrderComments($eventTriggered->getOrder()->id, "couldntCreateCreditNote");
+                } else {
+                    $this->addOrderComments($eventTriggered->getOrder()->id, "successfullyCreatedCreditNote");
+                }
             }
         }
     }

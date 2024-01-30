@@ -1,6 +1,9 @@
 <script type="text/javascript">
-    function initMonduCheckout(orderId, mopId) {
+    function initMonduCheckout(orderId, mopId, element) {
+        element.disabled = true;
+
         $.get("/mondu/init_payment?order_id=" + orderId + "&mop_id=" + mopId, (data) => {
+            element.disabled = false;
             window.location = data.url;
         });
     }
