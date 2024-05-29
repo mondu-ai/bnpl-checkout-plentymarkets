@@ -10,7 +10,7 @@ use Plenty\Plugin\Application;
 class SettingsService {
     public const PLUGIN_VERSION = '1.0.0';
     public const PLUGIN_NAME = 'plentymarkets';
-    public const DEMO_API_URL = 'https://api.stage.mondu.ai/api/v1';
+    public const DEMO_API_URL = 'https://api.demo.mondu.ai/api/v1';
     public const LIVE_API_URL = 'https://api.mondu.ai/api/v1';
 
     protected $data;
