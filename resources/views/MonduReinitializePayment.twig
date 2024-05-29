@@ -1,0 +1,36 @@
+{% set monduPaymentId = -1 %}
+{% set monduOldPaymentId = 0 %}
+{% set monduPaidStatus = '' %}
+
+{% set monduProperties = order.properties %}
+{% for property in monduProperties %}
+    {% if property.typeId == 3 %}
+        {% set monduPaymentId = property.value %}
+    {% endif %}
+    {% if property.typeId == 4 %}
+        {% set monduPaidStatus = property.value %}
+    {% endif %}
+{% endfor %}
+
+{% if ( monduPaymentId in paymentMethodIds ) and (monduPaidStatus not in ['fullyPaid', 'partlyPaid', 'overpaid']) %}
+    {% set display = "block" %}
+{% else %}
+    {% set display = "none" %}
+{% endif %}
+
+<button style="
+    background-color: #8B4AFF;
+    color: white !important;
+    border: none;
+    padding: 0.25rem;
+    width: 100%;
+    font-size: 1rem;
+    margin-top: .5rem;
+    display: {{ display }};
+"
+    id="mondu-init-payment"
+    onClick="initMonduCheckout({{ order.id }}, {{ monduPaymentId }}, this)"
+    class="btn btn-block"
+>
+    {{trans("Mondu::PaymentMethods.paymentButton")}}
+</button>

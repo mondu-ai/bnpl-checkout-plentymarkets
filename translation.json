@@ -1,0 +1,15 @@
+{
+  "sections":
+  [
+    {
+      "name": "MultilingualismConfig.paymentMethod",
+      "prefix": "paymentMethod"
+    }
+  ],
+  "ignoredTranslationFiles":
+  [
+    "Logs.properties",
+    "MultilingualismConfig.properties",
+    "MonduAssistant.properties"
+  ]
+}

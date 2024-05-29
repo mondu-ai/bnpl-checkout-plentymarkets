@@ -1,0 +1,14 @@
+{
+  "@plentymarkets/generator-plugin": {
+    "promptValues": {
+      "type": "payment"
+    },
+    "answers": {
+      "name": "Mondu",
+      "author": "Mondu GmbH",
+      "type": "payment",
+      "description": "Mondu Buy Now Pay Later",
+      "version": "0.0.1"
+    }
+  }
+}
