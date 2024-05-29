@@ -1,0 +1,47 @@
+{
+    "name"              :   "Mondu",
+    "namespace"         :   "Mondu",
+    "marketplaceName"   : {
+        "en": "Mondu - Buy Now, Pay Later",
+        "de": "Mondu - Buy Now, Pay Later"
+    },
+    "type"              :   "payment",
+    "version"           :   "1.0.0",
+    "license"           :   "Open Software License (\"OSL\") v. 3.0",
+    "pluginIcon"        :   "icon_plugin_xs.png",
+    "price"             :    0.00,
+    "description"       :   "Mondu plugin for plentymarkets",
+    "shortDescription"  : {
+        "en": "Mondu provides B2B E-commerce and B2B marketplaces with an online payment solution  to enable their customers to pay with their preferred payment methods and flexible payment terms.",
+        "de": "Mondu bietet B2B-E-Commerce und B2B-Marktplätzen eine Online-Zahlungslösung, mit der Kund*innen mit ihren bevorzugten Zahlungsmethoden und flexiblen Zahlungsbedingungen bezahlen können."
+    },
+    "categories"        :   ["4083"],
+    "keywords"          :   ["mondu", "payment"],
+    "author"            :   "Mondu GmbH",
+    "authorIcon"        :   "icon_author_xs.png",
+    "serviceProvider"   :   "Mondu\\Providers\\MonduServiceProvider",
+    "dependencies"      :   {
+        "guzzlehttp/guzzle": "6.3.*"
+    },
+    "containers": [],
+    "runOnBuild": [
+        "Mondu\\Migrations\\CreatePaymentMethods_01",
+        "Mondu\\Migrations\\CreateMonduTransactionTable_02",
+        "Mondu\\Migrations\\CreateSettingsTable_02"
+    ],
+    "platform": {
+        "php": ">=7.3 <8.2"
+    },
+    "dataProviders": [
+        {
+            "key": "Mondu\\Providers\\DataProvider\\MonduReinitializePayment",
+            "name": "Mondu Reinitialize Payment",
+            "description": "Display the Payment Button after the Payment changed to the Mondu"
+        },
+        {
+            "key": "Mondu\\Providers\\DataProvider\\MonduReinitializePaymentScript",
+            "name": "Mondu Reinitialize Payment Script",
+            "description": "Javascript for the Mondu Payment Button"
+        }
+    ]
+}
