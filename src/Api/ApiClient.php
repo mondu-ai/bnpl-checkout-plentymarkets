@@ -102,8 +102,7 @@ class ApiClient
         return $this->apiCall(
             [
                 'endpoint' => 'webhooks/keys',
-                'method' => 'GET',
-                'body' => []
+                'method' => 'GET'
             ],
             'GET_WEBHOOK_SECRET'
         );
